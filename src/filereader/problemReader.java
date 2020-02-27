@@ -23,19 +23,19 @@ import java.util.Map;
 
 class Exam
 {
-    int examId,examDuration;
+    int examId,examDuration,studentsCount=0;
     ArrayList<Integer> enrollmentList = new ArrayList<>();
     
     Exam(int id, int duration)
     {
         examId=id;
         examDuration=duration;
-
     }
     
     void addStudent(Integer student)
     {
         enrollmentList.add(student);
+        studentsCount++;
     }
 }
 
@@ -105,7 +105,7 @@ public class problemReader
                 {                    
                     case StreamTokenizer.TT_EOL:    
                         line = token.lineno()-1;
-                        System.out.println("Finished Reading Exam "+ (line-1) + "\n Students added : " + examVector.get(line-2).enrollmentList);
+                        System.out.println("Finished Reading Exam "+ (line-1) + "\n" + examVector.get(line-2).studentsCount + " student(s) added : " + examVector.get(line-2).enrollmentList);
                         token.nextToken();                        
                         examVector.add(new Exam(line,(int)token.nval));        
                         System.out.println("Exam "+ line + " added. Duration = " + examVector.get(line-1).examDuration);
@@ -130,6 +130,48 @@ public class problemReader
         for(Map.Entry<Integer,List> entry : studentMap.entrySet())            
         {
             System.out.println("Student "+ (++studentCount) + "{ " + entry.getKey() + "}: Exams = " + entry.getValue());
+        }
+        
+        //Initialize Conflict Matrix
+        ArrayList <ArrayList<Integer>> conflictMatrix = new ArrayList<>(numberOfExams);
+        for(int i=0;i<=numberOfExams-1;i++)
+        {            
+            conflictMatrix.add(new ArrayList(numberOfExams));
+            for(int j=0;j<=numberOfExams-1;j++)
+            {
+                conflictMatrix.get(i).add(0);
+            }
+        }
+        //Generate Conflict Matrix
+        for(int currExam=0; currExam<examVector.size()-2;currExam++)
+        {            
+            System.out.println("Current Exam: " + examVector.get(currExam));
+            int student;
+            for(int currStudent=0; currStudent<=examVector.get(currExam).enrollmentList.size()-1;currStudent++)
+            {
+                student = examVector.get(currExam).enrollmentList.get(currStudent);
+                System.out.println("Current Exam: " + student);
+                for(int nextExam=currExam+1;nextExam<=examVector.size()-1;nextExam++)
+                {
+                    if(examVector.get(nextExam).enrollmentList.contains(student))
+                    {
+                        int tmpEnrollment =  conflictMatrix.get(currExam).get(nextExam)+1;
+                        conflictMatrix.get(currExam).add(nextExam, tmpEnrollment);
+                        conflictMatrix.get(nextExam).add(currExam, tmpEnrollment);
+                    }
+                }
+            }
+        }
+        
+        //Display ConflictMatrix
+        System.out.println("DISPLAYING CONFLICT MARIX:\n");
+        for(int i=0;i<numberOfExams;i++)
+        {
+            for(int j=0;j<numberOfExams;j++)
+            {
+                System.out.print(conflictMatrix.get(i).get(j)+", ");
+            }
+            System.out.println();
         }
             
         //Read Periods
@@ -269,7 +311,7 @@ public class problemReader
     {
         try
         {
-            problemReader objproblemReader = new problemReader("C:/Users/Ahmad/Documents/NetBeansProjects/itc2007fileReader/exam_comp_set7.exam");
+            problemReader objproblemReader = new problemReader("C:/Users/Ahmad/Documents/NetBeansProjects/itc2007fileReader/exam_comp_set00.exam");
         }
         catch(Exception e)
         {
