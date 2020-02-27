@@ -20,13 +20,32 @@ import java.util.Map;
  *
  * @author PhDLab
  */
+
+class Exam
+{
+    int examId,examDuration;
+    ArrayList<Integer> enrollmentList = new ArrayList<>();
+    
+    Exam(int id, int duration)
+    {
+        examId=id;
+        examDuration=duration;
+
+    }
+    
+    void addStudent(Integer student)
+    {
+        enrollmentList.add(student);
+    }
+}
+
 public class problemReader
 {    
-    int numberOfExams,numberOfPeriods,numberOfRooms,examDuration;
+    int numberOfExams,numberOfPeriods,numberOfRooms;
     
     Map <Integer,List> studentMap = new HashMap<>();
     
-    Itc2007DatasetReader(String file) throws IOException 
+    problemReader(String file) throws IOException 
     {
         InputStream in = getClass().getResourceAsStream(file);
         if (in == null) 
@@ -38,6 +57,7 @@ public class problemReader
         BufferedReader br = new BufferedReader(isr);
 
         StreamTokenizer token = new StreamTokenizer(br);
+        
         token.eolIsSignificant(true);
         boolean found ;
         found = false ;
@@ -57,8 +77,12 @@ public class problemReader
         numberOfExams =  (int)token.nval ;
         System.out.println("Number of Exams: "+numberOfExams);
         token.nextToken();token.nextToken();token.nextToken();
-        examDuration = (int)token.nval;
-         System.out.println("Exam 1 duration: "+examDuration);
+        
+        ArrayList<Exam> examVector = new ArrayList<Exam>();
+        int line = token.lineno()-1;          
+        examVector.add(new Exam(line-1,(int)token.nval));        
+        System.out.println("Exam "+ line + " added. Duration = " + examVector.get(line-1).examDuration);       
+        
         //Read Enrollments
         found=false;
         int t=0;
@@ -70,7 +94,7 @@ public class problemReader
                 token.nextToken();
                 numberOfPeriods=(int)token.nval;
                 System.out.println("Finished Reading Enrollments.");
-                System.out.println("Number of Periods = "+numberOfPeriods);
+                System.out.println("No. of Periods to be read = "+numberOfPeriods);
                 found = true ;
             }                
             else
@@ -79,13 +103,17 @@ public class problemReader
                 
                 switch(t)
                 {                    
-                    case StreamTokenizer.TT_EOL:                                               
-                        token.nextToken();
-                        examDuration = (int)token.nval;
-                        System.out.println("Exam "+ (token.lineno()-1) +" duration: "+examDuration);
+                    case StreamTokenizer.TT_EOL:    
+                        line = token.lineno()-1;
+                        System.out.println("Finished Reading Exam "+ (line-1) + "\n Students added : " + examVector.get(line-2).enrollmentList);
+                        token.nextToken();                        
+                        examVector.add(new Exam(line,(int)token.nval));        
+                        System.out.println("Exam "+ line + " added. Duration = " + examVector.get(line-1).examDuration);
                         break;
                     case StreamTokenizer.TT_NUMBER:  
                         Integer currentStudent = (int)token.nval;
+                        line = token.lineno()-1;
+                        examVector.get(line-1).addStudent(currentStudent);
                         if(!studentMap.containsKey(currentStudent))
                         {                            
                             List <Integer> examList = new ArrayList();
@@ -97,12 +125,12 @@ public class problemReader
             }
         }
         
+        //Print Student Map
         int studentCount=0;
         for(Map.Entry<Integer,List> entry : studentMap.entrySet())            
         {
             System.out.println("Student "+ (++studentCount) + "{ " + entry.getKey() + "}: Exams = " + entry.getValue());
         }
-        
             
         //Read Periods
         found=false;
@@ -241,7 +269,7 @@ public class problemReader
     {
         try
         {
-            problemReader objproblemReader = new problemReader("C:/Users/Ahmad/Documents/NetBeansProjects/itc2007fileReader/exam_comp_set3.exam");
+            problemReader objproblemReader = new problemReader("C:/Users/Ahmad/Documents/NetBeansProjects/itc2007fileReader/exam_comp_set7.exam");
         }
         catch(Exception e)
         {
