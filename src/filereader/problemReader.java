@@ -40,13 +40,15 @@ class Exam
 }
 
 public class problemReader
-{    
+{      
     int numberOfExams,numberOfPeriods,numberOfRooms;
     
     Map <Integer,List> studentMap = new HashMap<>();
+    ArrayList<Exam> examVector = new ArrayList<Exam>();
     
     problemReader(String file) throws IOException 
     {
+        
         InputStream in = getClass().getResourceAsStream(file);
         if (in == null) 
         {
@@ -62,76 +64,87 @@ public class problemReader
         boolean found ;
         found = false ;
 
-        token.nextToken();
-        while(!found) 
+        readExams(token,found);
+        readPeriods(token,found);
+        readRooms(token,found);
+        readConstraints(token,found);
+        readWeightings(token,found);
+        
+        System.out.println("Reading Successful.");
+    } 
+    
+    void readExams(StreamTokenizer tok, boolean fnd) throws IOException
+    {
+        tok.nextToken();
+        while(!fnd) 
         {
-            if ((token.sval != null) && ((token.sval.compareTo("Exams") == 0)))
-                found = true ;
+            if ((tok.sval != null) && ((tok.sval.compareTo("Exams") == 0)))
+                fnd = true ;
             else
-                token.nextToken() ;
+                tok.nextToken() ;
         }
 
-        token.nextToken() ;
-        token.nextToken() ;
+        tok.nextToken() ;
+        tok.nextToken() ;
 
-        numberOfExams =  (int)token.nval ;
+        numberOfExams =  (int)tok.nval ;
         System.out.println("Number of Exams: "+numberOfExams);
-        token.nextToken();token.nextToken();token.nextToken();
-        
-        ArrayList<Exam> examVector = new ArrayList<Exam>();
-        int line = token.lineno()-1;          
-        examVector.add(new Exam(line-1,(int)token.nval));        
-        System.out.println("Exam "+ line + " added. Duration = " + examVector.get(line-1).examDuration);       
-        
+        tok.nextToken();tok.nextToken();tok.nextToken();
+
+        System.out.println("Reading Token: "+tok.nval);
+        addExam(tok);
+             
+
         //Read Enrollments
-        found=false;
+        fnd=false;
         int t=0;
-        while(!found) 
+        while(!fnd) 
         {
-            if ((token.sval != null) && ((token.sval.compareTo("Periods") == 0)))
+            if ((tok.sval != null) && ((tok.sval.compareTo("Periods") == 0)))
             {
-                token.nextToken();
-                token.nextToken();
-                numberOfPeriods=(int)token.nval;
+                tok.nextToken();
+                tok.nextToken();
+                numberOfPeriods=(int)tok.nval;
                 System.out.println("Finished Reading Enrollments.");
                 System.out.println("No. of Periods to be read = "+numberOfPeriods);
-                found = true ;
+                fnd = true ;
             }                
             else
             {                
-                t = token.nextToken();
-                
+                t = tok.nextToken();
+
                 switch(t)
                 {                    
                     case StreamTokenizer.TT_EOL:    
-                        line = token.lineno()-1;
-                        System.out.println("Finished Reading Exam "+ (line-1) + "\n" + examVector.get(line-2).studentsCount + " student(s) added : " + examVector.get(line-2).enrollmentList);
-                        token.nextToken();                        
-                        examVector.add(new Exam(line,(int)token.nval));        
-                        System.out.println("Exam "+ line + " added. Duration = " + examVector.get(line-1).examDuration);
+                        //line = tok.lineno()-1;
+                        //System.out.println("Finished Reading Exam "+ (line-1) + "\n" + examVector.get(line-2).studentsCount + " student(s) added : " + examVector.get(line-2).enrollmentList);
+                        tok.nextToken(); 
+                        System.out.println("Now reading: "+(int)tok.nval);
+                        addExam(tok);                        
                         break;
-                    case StreamTokenizer.TT_NUMBER:  
-                        Integer currentStudent = (int)token.nval;
-                        line = token.lineno()-1;
-                        examVector.get(line-1).addStudent(currentStudent);
+                    case StreamTokenizer.TT_NUMBER: 
+                        
+                        Integer currentStudent = (int)tok.nval;                 
+                        examVector.get(tok.lineno()-2).addStudent(currentStudent);
+                        System.out.println("Student "+(int)tok.nval+" added successfully.");
                         if(!studentMap.containsKey(currentStudent))
                         {                            
                             List <Integer> examList = new ArrayList();
                             studentMap.put(currentStudent, examList);                            
                         }
-                        studentMap.get(currentStudent).add(token.lineno()-1);
+                        studentMap.get(currentStudent).add(tok.lineno()-1);
                         break;
                 }                
             }
         }
-        
+
         //Print Student Map
         int studentCount=0;
         for(Map.Entry<Integer,List> entry : studentMap.entrySet())            
         {
             System.out.println("Student "+ (++studentCount) + "{ " + entry.getKey() + "}: Exams = " + entry.getValue());
         }
-        
+
         //Initialize Conflict Matrix
         ArrayList <ArrayList<Integer>> conflictMatrix = new ArrayList<>(numberOfExams);
         for(int i=0;i<=numberOfExams-1;i++)
@@ -143,26 +156,44 @@ public class problemReader
             }
         }
         //Generate Conflict Matrix
-        for(int currExam=0; currExam<examVector.size()-2;currExam++)
-        {            
-            System.out.println("Current Exam: " + examVector.get(currExam));
+        ArrayList cleared = new ArrayList();
+        System.out.println("Total Exams: "+examVector.size());
+        examVector.forEach((e)->System.out.println(e.examId));
+        
+        for(int currExam=0; currExam<=examVector.size()-2;currExam++)
+        {                        
+            System.out.println("Current Exam: " + examVector.get(currExam).examId+ " with "+ examVector.get(currExam).enrollmentList.size()+" students");
             int student;
+            cleared.clear();
             for(int currStudent=0; currStudent<=examVector.get(currExam).enrollmentList.size()-1;currStudent++)
             {
                 student = examVector.get(currExam).enrollmentList.get(currStudent);
-                System.out.println("Current Exam: " + student);
+                if(cleared.contains(student))continue;
+                cleared.add(student);
+                System.out.println("Current Student: " + student);
+                //int conflictCount=0;
                 for(int nextExam=currExam+1;nextExam<=examVector.size()-1;nextExam++)
-                {
+                {                   
+                    System.out.println("Next Exam: " + examVector.get(nextExam).examId);
                     if(examVector.get(nextExam).enrollmentList.contains(student))
                     {
-                        int tmpEnrollment =  conflictMatrix.get(currExam).get(nextExam)+1;
-                        conflictMatrix.get(currExam).add(nextExam, tmpEnrollment);
-                        conflictMatrix.get(nextExam).add(currExam, tmpEnrollment);
+                        //conflictCount++;
+                        System.out.println("Student "+student +" found in both exams "+ currExam +" and "+ nextExam);
+                        System.out.println();
+                        int tmpEnrollment =  conflictMatrix.get(currExam).get(nextExam);
+                        System.out.println("Previous conflict :"+tmpEnrollment);
+                        tmpEnrollment++;  
+                        conflictMatrix.get(currExam).set(nextExam, tmpEnrollment);
+                        conflictMatrix.get(nextExam).set(currExam, tmpEnrollment);
+                        //conflictMatrix.get(currExam).remove(nextExam);
+                        //conflictMatrix.get(currExam).add(nextExam, tmpEnrollment);
+                        //conflictMatrix.get(currExam).remove(currExam);
+                        //conflictMatrix.get(nextExam).add(currExam, tmpEnrollment);
                     }
                 }
             }
         }
-        
+
         //Display ConflictMatrix
         System.out.println("DISPLAYING CONFLICT MARIX:\n");
         for(int i=0;i<numberOfExams;i++)
@@ -172,118 +203,145 @@ public class problemReader
                 System.out.print(conflictMatrix.get(i).get(j)+", ");
             }
             System.out.println();
-        }
-            
-        //Read Periods
-        found=false;
-        while(!found) 
+        }  
+    }
+    
+    void addExam(StreamTokenizer tok)            
+    {
+        
+        int line = tok.lineno()-1;
+        if(line<=numberOfExams)
         {
-            if ((token.sval != null) && ((token.sval.compareTo("Rooms") == 0)))
+            System.out.println("Token is @ line: "+tok.lineno());
+            examVector.add(new Exam(line-1,(int)tok.nval));        
+            System.out.println("Exam "+ (line-1) + " added. Duration = " + examVector.get(line-1).examDuration);  
+            examVector.forEach((e)->System.out.println(e.examId));
+        }                
+    }
+    
+    void readPeriods(StreamTokenizer tok, boolean fnd) throws IOException
+    {
+    //Read Periods
+        fnd=false;
+        int t;
+        while(!fnd) 
+        {
+            if ((tok.sval != null) && ((tok.sval.compareTo("Rooms") == 0)))
             {
-                token.nextToken();
-                token.nextToken();
-                numberOfRooms=(int)token.nval;
+                tok.nextToken();
+                tok.nextToken();
+                numberOfRooms=(int)tok.nval;
                 System.out.println("Finished Reading Periods.");
                 System.out.println("Number of Periods = "+numberOfRooms);
-                found = true ;
+                fnd = true ;
             }                
             else
             {                                                   
-                t = token.nextToken();
+                t = tok.nextToken();
                 switch(t)
                 {
                     case StreamTokenizer.TT_EOL:
                         break;
                     case StreamTokenizer.TT_NUMBER:                    
-                        System.out.println("nextToken():"+token.nval);
+                        System.out.println("nextToken():"+tok.nval);
                         break;
                 }
             }
         }
-         
-        //Read Rooms
-        found=false;
-        while(!found) 
+    }
+    
+    void readRooms(StreamTokenizer tok, boolean fnd) throws IOException
+    {
+    //Read Rooms
+        fnd=false;int t;
+        while(!fnd) 
         {
-            if ((token.sval != null) && ((token.sval.compareTo("PeriodHardConstraints") == 0)))
+            if ((tok.sval != null) && ((tok.sval.compareTo("PeriodHardConstraints") == 0)))
             {
-                token.nextToken();
+                tok.nextToken();
                 System.out.println("Finished Reading Rooms.");
-                found = true ;
+                fnd = true ;
             }                
             else
             {                                                   
-                t = token.nextToken();
+                t = tok.nextToken();
                 switch(t)
                 {
                     case StreamTokenizer.TT_EOL:
                         break;
                     case StreamTokenizer.TT_NUMBER:                    
-                        System.out.println("nextToken():"+token.nval);
+                        System.out.println("nextToken():"+tok.nval);
                         break;
                 }
             }
         }
-        
+    }
+    
+    void readConstraints(StreamTokenizer tok, boolean fnd) throws IOException
+    {
         //Read PeriodHardConstraints
-        found=false;
-        while(!found) 
+        fnd=false;int t;
+        while(!fnd) 
         {
-            if ((token.sval != null) && ((token.sval.compareTo("RoomHardConstraints") == 0)))
+            if ((tok.sval != null) && ((tok.sval.compareTo("RoomHardConstraints") == 0)))
             {
-                token.nextToken();
-                token.nextToken();
-                numberOfRooms=(int)token.nval;
+                tok.nextToken();
+                tok.nextToken();
+                numberOfRooms=(int)tok.nval;
                 System.out.println("Finished Reading PeriodHardConstraints.");
-                found = true ;
+                fnd = true ;
             }                
             else
             {                                                   
-                t = token.nextToken();
+                t = tok.nextToken();
                 switch(t)
                 {
                     case StreamTokenizer.TT_EOL:
                         break;
                     case StreamTokenizer.TT_NUMBER:                    
-                        System.out.println("nextToken():"+token.nval);
+                        System.out.println("nextToken():"+tok.nval);
                         break;
                     case StreamTokenizer.TT_WORD:
-                        System.out.println("nextToken():"+token.sval);
+                        System.out.println("nextToken():"+tok.sval);
                         break;
                 }
             }
         }
-        
+
         //Read RoomHardConstraints
-        found=false;
-        while(!found) 
+        fnd=false;
+        while(!fnd) 
         {
-            if ((token.sval != null) && ((token.sval.compareTo("InstitutionalWeightings") == 0)))
+            if ((tok.sval != null) && ((tok.sval.compareTo("InstitutionalWeightings") == 0)))
             {
-                token.nextToken();
-                token.nextToken();
-                numberOfRooms=(int)token.nval;
+                tok.nextToken();
+                tok.nextToken();
+                numberOfRooms=(int)tok.nval;
                 System.out.println("Finished Reading RoomHardConstraints.");
-                found = true ;
+                fnd = true ;
             }                
             else
             {                                                   
-                t = token.nextToken();
+                t = tok.nextToken();
                 switch(t)
                 {
                     case StreamTokenizer.TT_EOL:
                         break;
                     case StreamTokenizer.TT_NUMBER:                    
-                        System.out.println("nextToken():"+token.nval);
+                        System.out.println("nextToken():"+tok.nval);
                         break;
                     case StreamTokenizer.TT_WORD:
-                        System.out.println("nextToken():"+token.sval);
+                        System.out.println("nextToken():"+tok.sval);
                         break;
                 }
             }
         }
-            
-        //Read InstitutionalWeightings
+    }
+    
+    void readWeightings(StreamTokenizer tok, boolean fnd) throws IOException
+    {
+    //Read InstitutionalWeightings
+        int t = tok.nextToken();    //WATCHOUT
         while(t != StreamTokenizer.TT_EOF)
             {                               
                 switch(t)
@@ -291,17 +349,15 @@ public class problemReader
                     case StreamTokenizer.TT_EOL:
                         break;
                     case StreamTokenizer.TT_NUMBER:                    
-                        System.out.println("nextToken():"+token.nval);
+                        System.out.println("nextToken():"+tok.nval);
                         break;
                     case StreamTokenizer.TT_WORD:
-                        System.out.println("nextToken():"+token.sval);
+                        System.out.println("nextToken():"+tok.sval);
                         break;
                 }
-                t= token.nextToken();
+                t= tok.nextToken();
             }
-        
-        System.out.println("Reading Successful.");
-    } 
+    }
     
     
     /**
@@ -311,7 +367,7 @@ public class problemReader
     {
         try
         {
-            problemReader objproblemReader = new problemReader("C:/Users/Ahmad/Documents/NetBeansProjects/itc2007fileReader/exam_comp_set00.exam");
+            problemReader objproblemReader = new problemReader("C:/Users/PhDLab/Documents/NetBeansProjects/examTimetableDataReader/exam_comp_set00.exam");
         }
         catch(Exception e)
         {
