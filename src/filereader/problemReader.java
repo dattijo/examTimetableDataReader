@@ -139,7 +139,7 @@ public class problemReader
         }
 
         //Print Student Map
-        int studentCount=0;
+        //int studentCount=0;
         for(Map.Entry<Integer,List> entry : studentMap.entrySet())            
         {
             //System.out.println("Student "+ (++studentCount) + "{ " + entry.getKey() + "}: Exams = " + entry.getValue());
@@ -194,6 +194,8 @@ public class problemReader
                 }
             }
         }
+        
+        createGraph(matrix);
 
         //ArrayList ConflictMatrix
 //        System.out.println("DISPLAYING ArrayList CONFLICT MARIX:\n");
@@ -373,7 +375,49 @@ public class problemReader
             }
     }
     
-    
+    void createGraph(int[][] cMat)
+    {
+        ArrayList<ArrayList<Integer>> examGraph = new ArrayList<>();
+//        for(int v1=0;v1<numberOfExams;v1++)
+//        {
+//            System.out.println("Vertex "+v1+" :");
+//            for(int v2=0;v2<numberOfExams;v2++)
+//            {
+//                if(cMat[v1][v2]!=0)
+//                {
+//                    examGraph.get(v1).add(v2);
+//                }
+//            }
+//            System.out.println();
+//        }
+        
+        for(int v1=0;v1<numberOfExams;v1++)
+        {
+            examGraph.add(new ArrayList());
+            for(int v2=0;v2<numberOfExams;v2++)
+            {
+                if(cMat[v1][v2]!=0)
+                {   
+                    System.out.println("New Edge Found ("+v1+" ---> "+v2);
+                    //if(v2>v1)
+                    {
+                        examGraph.get(v1).add(v2);                        
+                    }
+                }
+            }
+        }
+        
+        System.out.println("Adjacency List: ");
+        for(int v1=0;v1<examGraph.size();v1++)
+        {
+            System.out.println("Vertex "+v1+" :");
+            for(int v2=0;v2<examGraph.get(v1).size();v2++)
+            {
+                System.out.print(examGraph.get(v1).get(v2)+", ");
+            }
+            System.out.println();
+        }
+    }
     /**
      * @param args the command line arguments
      */
