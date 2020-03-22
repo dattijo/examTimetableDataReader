@@ -16,15 +16,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jgrapht.Graph;
+
+import org.jgrapht.alg.color.*;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleGraph;
+
+
 /**
  *
  * @author PhDLab
  */
 
 
-
 public class problemReader
 {      
+   
+    
     class Exam
     {
         int examId,examDuration,studentsCount=0;
@@ -45,6 +53,9 @@ public class problemReader
     }
     
     int numberOfExams,numberOfPeriods,numberOfRooms;
+   
+    Graph<Integer, DefaultEdge> exGraph = new SimpleGraph<>(DefaultEdge.class);
+    
     
     Map <Integer,List> studentMap = new HashMap<>();
     ArrayList<Exam> examVector = new ArrayList<Exam>();
@@ -60,8 +71,9 @@ public class problemReader
     
         InputStreamReader isr = new InputStreamReader(in);
         BufferedReader br = new BufferedReader(isr);
-
         StreamTokenizer token = new StreamTokenizer(br);
+        
+        GreedyColoring exGraphColored;
         
         token.eolIsSignificant(true);
         boolean found ;
@@ -74,6 +86,11 @@ public class problemReader
         readWeightings(token,found);
         
         System.out.println("Reading Successful.");
+        
+        exGraphColored = new GreedyColoring(exGraph);
+        //exGraphColored.getColoring();
+        System.out.println("Vertices and thier Colors :"+exGraphColored.getColoring().getColors());
+        System.out.println("Colors Used = "+exGraphColored.getColoring().getNumberColors());
     } 
     
     void readExams(StreamTokenizer tok, boolean fnd) throws IOException
@@ -100,7 +117,7 @@ public class problemReader
 
         //Read Enrollments
         fnd=false;
-        int t=0;
+        int t;//=0;
         while(!fnd) 
         {
             if ((tok.sval != null) && ((tok.sval.compareTo("Periods") == 0)))
@@ -141,10 +158,10 @@ public class problemReader
 
         //Print Student Map
         //int studentCount=0;
-        for(Map.Entry<Integer,List> entry : studentMap.entrySet())            
-        {
-            //System.out.println("Student "+ (++studentCount) + "{ " + entry.getKey() + "}: Exams = " + entry.getValue());
-        }
+//        for(Map.Entry<Integer,List> entry : studentMap.entrySet())            
+//        {
+//            //System.out.println("Student "+ (++studentCount) + "{ " + entry.getKey() + "}: Exams = " + entry.getValue());
+//        }
 
         //Initialize Conflict Matrix
         int matrix[][]= new int[numberOfExams][numberOfExams];
@@ -211,16 +228,15 @@ public class problemReader
 //        }  
         
         //int Matrix ConflictMatrix
-//        System.out.println("DISPLAYING int[][] Matrix CONFLICT MARIX:\n");
-//        for(int i=0;i<numberOfExams;i++)
-//        {
-//            for(int j=0;j<numberOfExams;j++)
-//            {
-//                //System.out.print(conflictMatrix.get(i).get(j)+", ");
-//                System.out.print(matrix[i][j]+", ");
-//            }
-//            System.out.println();
-//        } 
+        System.out.println("DISPLAYING int[][] Matrix CONFLICT MARIX:\n");
+        for(int i=0;i<numberOfExams;i++)
+        {
+            for(int j=0;j<numberOfExams;j++)
+            {
+                System.out.print(matrix[i][j]+", ");
+            }
+            System.out.println();
+        } 
     }
     
     void addExam(StreamTokenizer tok)            
@@ -378,7 +394,8 @@ public class problemReader
     
     void createGraph(int[][] cMat)
     {
-        ArrayList<ArrayList<Integer>> examGraph = new ArrayList<>();
+        //ArrayList<ArrayList<Integer>> examGraph = new ArrayList<>();
+        //exGraph = new SimpleGraph<>(DefaultEdge.class);
 //        for(int v1=0;v1<numberOfExams;v1++)
 //        {
 //            System.out.println("Vertex "+v1+" :");
@@ -392,31 +409,50 @@ public class problemReader
 //            System.out.println();
 //        }
         
-        for(int v1=0;v1<numberOfExams;v1++)
+        for(int v1=1;v1<=numberOfExams;v1++)
         {
-            examGraph.add(new ArrayList());
-            for(int v2=0;v2<numberOfExams;v2++)
+            //examGraph.add(new ArrayList());
+            exGraph.addVertex(v1);
+            
+            
+        }
+        System.out.println("Vertices in graph: "+exGraph.vertexSet());
+        for(int v1=1;v1<=numberOfExams;v1++)
+        {
+            //System.out.print();
+            for(int v2=1;v2<=numberOfExams;v2++)
             {
-                if(cMat[v1][v2]!=0)
+                //System.out.println("Finding edge between "+v1+" and "+v2);
+                if(cMat[v1-1][v2-1]!=0)
                 {   
-                    System.out.println("New Edge Found ("+v1+" ---> "+v2);
+                    
                     //if(v2>v1)
-                    {
-                        examGraph.get(v1).add(v2);                        
-                    }
+                    //System.out.println("Edge "+v1+" ---> "+v2+" added.");
+                    exGraph.addEdge(v1, v2);
+                    
+                    //examGraph.get(v1).add(v2);                        
+                    
                 }
             }
         }
         
         System.out.println("Adjacency List: ");
-        for(int v1=0;v1<examGraph.size();v1++)
+        //for(int v1=0;v1<examGraph.size();v1++)
+        for(int v1=1;v1<=numberOfExams;v1++)
         {
-            System.out.println("Vertex "+v1+" :");
-            for(int v2=0;v2<examGraph.get(v1).size();v2++)
-            {
-                System.out.print(examGraph.get(v1).get(v2)+", ");
-            }
-            System.out.println();
+            
+            //System.out.println("Vertex "+v1+" :");
+            System.out.println(exGraph.edgesOf(v1));
+            //for(int v2=0;v2<exGraph.degreeOf(v1);v2++)
+            //{
+            //    if(exGraph.getEdge(v1, v2)!=null)
+            //    {
+            //        exGraph.getEdge(v1, v2);
+            //    }
+            //    System.out.print(exGraph.edgesOf(v1));
+                //System.out.print(examGraph.get(v1).get(v2)+", ");
+            //}
+            //System.out.println();
         }
     }
     /**
@@ -426,7 +462,8 @@ public class problemReader
     {
         try
         {
-            problemReader objproblemReader = new problemReader("C:/Users/PhDLab/Documents/NetBeansProjects/examTimetableDataReader/exam_comp_set7.exam");
+            problemReader objproblemReader = new problemReader(
+                    "C:/Users/PhDLab/Documents/NetBeansProjects/examTimetableDataReader/exam_comp_set3.exam");
         }
         catch(Exception e)
         {
