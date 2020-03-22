@@ -30,8 +30,7 @@ import org.jgrapht.graph.SimpleGraph;
 
 
 public class problemReader
-{      
-   
+{        
     
     class Exam
     {
@@ -55,10 +54,12 @@ public class problemReader
     int numberOfExams,numberOfPeriods,numberOfRooms;
    
     Graph<Integer, DefaultEdge> exGraph = new SimpleGraph<>(DefaultEdge.class);
-    
+    GreedyColoring exGraphColored;
     
     Map <Integer,List> studentMap = new HashMap<>();
     ArrayList<Exam> examVector = new ArrayList<Exam>();
+    
+    int ttable[][];
     
     problemReader(String file) throws IOException 
     {
@@ -73,7 +74,7 @@ public class problemReader
         BufferedReader br = new BufferedReader(isr);
         StreamTokenizer token = new StreamTokenizer(br);
         
-        GreedyColoring exGraphColored;
+        
         
         token.eolIsSignificant(true);
         boolean found ;
@@ -88,9 +89,13 @@ public class problemReader
         System.out.println("Reading Successful.");
         
         exGraphColored = new GreedyColoring(exGraph);
+        
+        assignExamsToPeriods();
+        
         //exGraphColored.getColoring();
         System.out.println("Vertices and thier Colors :"+exGraphColored.getColoring().getColors());
         System.out.println("Colors Used = "+exGraphColored.getColoring().getNumberColors());
+        System.out.println("Colors Classes = "+exGraphColored.getColoring().getColorClasses());
     } 
     
     void readExams(StreamTokenizer tok, boolean fnd) throws IOException
@@ -214,6 +219,8 @@ public class problemReader
         }
         
         createGraph(matrix);
+        
+        
 
         //ArrayList ConflictMatrix
 //        System.out.println("DISPLAYING ArrayList CONFLICT MARIX:\n");
@@ -455,6 +462,39 @@ public class problemReader
             //System.out.println();
         }
     }
+    
+    private void assignExamsToPeriods() 
+    {
+        //System.out.println("List of Keys in Color Map:"+exGraphColored.getColoring().getColors().keySet());
+        //System.out.println("List of Values in Color Map:"+exGraphColored.getColoring().getColors().values());
+        int E = numberOfExams;
+        int P = exGraphColored.getColoring().getNumberColors();
+        ttable = new int[E][P];
+        for(int i=0;i<E;i++)
+        {
+            for(int p=0;p<P;p++)
+            {
+                if ((int)exGraphColored.getColoring().getColors().get(i+1)==p)
+                {
+                    ttable[i][p]=1;
+                }
+            }
+        }
+        
+        System.out.println("ttable: ");
+        System.out.print("E/P ");
+        for(int p=0;p<P;p++) System.out.print(p+ " ");
+        System.out.println();
+        for(int i=0;i<E;i++)
+        {
+            System.out.print((i+1)+":  ");
+            for(int p=0;p<P;p++)
+            {                
+                System.out.print(ttable[i][p]+" ");                
+            }
+            System.out.println();
+        }
+    }   
     /**
      * @param args the command line arguments
      */
@@ -463,7 +503,7 @@ public class problemReader
         try
         {
             problemReader objproblemReader = new problemReader(
-                    "C:/Users/PhDLab/Documents/NetBeansProjects/examTimetableDataReader/exam_comp_set3.exam");
+                    "C:/Users/PhDLab/Documents/NetBeansProjects/examTimetableDataReader/exam_comp_set00.exam");
         }
         catch(Exception e)
         {
