@@ -60,6 +60,7 @@ public class problemReader
     ArrayList<Exam> examVector = new ArrayList<Exam>();
     
     int ttable[][];
+    int matrix[][];
     
     problemReader(String file) throws IOException 
     {
@@ -91,6 +92,7 @@ public class problemReader
         exGraphColored = new GreedyColoring(exGraph);
         
         assignExamsToPeriods();
+        evaluate();
         
         //exGraphColored.getColoring();
         System.out.println("Vertices and thier Colors :"+exGraphColored.getColoring().getColors());
@@ -169,7 +171,7 @@ public class problemReader
 //        }
 
         //Initialize Conflict Matrix
-        int matrix[][]= new int[numberOfExams][numberOfExams];
+        matrix = new int[numberOfExams][numberOfExams];
         //ArrayList <ArrayList<Integer>> conflictMatrix = new ArrayList<>(numberOfExams);
         for(int i=0;i<=numberOfExams-1;i++)
         {            
@@ -494,7 +496,31 @@ public class problemReader
             }
             System.out.println();
         }
-    }   
+    } 
+    
+    public void evaluate() 
+    {
+        int fitness=0;
+        int P = exGraphColored.getColoring().getNumberColors();
+        System.out.println("Fitness = "+fitness+"\nNumber of Periods = "+P);
+        
+        for(int i=0; i<numberOfExams-1;i++)
+        {          
+            for(int j=i+1; j<numberOfExams;j++)
+            {
+                System.out.println("Exam "+(i+1)+" followed by "+(j+1));
+                for(int p=0;p<P-1;p++)
+                {
+                    //System.out.println("Period "+p);
+                    fitness+=ttable[i][p]*ttable[j][p+1]*matrix[i][j];
+//                    System.out.println("Fitness = "+fitness);
+                }
+            }
+        }
+        
+        System.out.println("Fitness = "+fitness);
+    }
+    
     /**
      * @param args the command line arguments
      */
@@ -503,7 +529,7 @@ public class problemReader
         try
         {
             problemReader objproblemReader = new problemReader(
-                    "C:/Users/PhDLab/Documents/NetBeansProjects/examTimetableDataReader/exam_comp_set00.exam");
+                    "C:/Users/PhDLab/Documents/NetBeansProjects/examTimetableDataReader/exam_comp_set1.exam");
         }
         catch(Exception e)
         {
